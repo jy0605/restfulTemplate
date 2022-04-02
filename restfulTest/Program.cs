@@ -21,9 +21,8 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
+List<WeatherForecast> listWeatherForecast = new List<WeatherForecast>();
+var forecast = Enumerable.Range(1, 5).Select(index =>
        new WeatherForecast
        (
            DateTime.Now.AddDays(index),
@@ -31,9 +30,43 @@ app.MapGet("/weatherforecast", () =>
            summaries[Random.Shared.Next(summaries.Length)]
        ))
         .ToArray();
-    return forecast;
+listWeatherForecast.AddRange(forecast);
+
+app.MapGet("/weatherforecast", () =>
+{
+    return listWeatherForecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapPut("/addWeatherForcast", (int howmanydaysfromtoday, int temperature) => {
+    Console.WriteLine("add new weather information");
+    var thisForecast =
+       new WeatherForecast
+       (
+           DateTime.Now.AddDays(howmanydaysfromtoday),
+           temperature,
+           summaries[Random.Shared.Next(summaries.Length)]
+       );
+    listWeatherForecast.Add(thisForecast);
+    return "Insert weather information is successed.";
+});
+
+app.MapPost("/getWeatheroftheDay", (int dayfromtoday) => {
+    var forecastoftheday = listWeatherForecast.Where(forecast => forecast.Date.Date == DateTime.Now.AddDays(dayfromtoday).Date).Select(forecast => forecast).ToArray();
+    return forecastoftheday;
+});
+
+app.MapDelete("/remWeatheroftheDay", (int dayfromtoday) => {
+    List<WeatherForecast> removeforecast = new List<WeatherForecast>();
+    listWeatherForecast.ForEach(forecast => {
+        if (forecast.Date.Date == DateTime.Now.AddDays(dayfromtoday).Date)
+            removeforecast.Add(forecast);
+            //listWeatherForecast.Remove(forecast);
+    });
+    listWeatherForecast = listWeatherForecast.Except(removeforecast).ToList();
+
+    return "Delete weather information of the day is successed.";
+});
 
 // app.MapGet("/", () => "Hello World!");
 
